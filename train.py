@@ -143,7 +143,7 @@ class Trainer:
     def _build_scheduler(self):
         """Build learning rate scheduler"""
         if self.config.scheduler == 'plateau':
-            scheduler = ReduceLROnPlateau(self.optimizer, mode='max', factor=0.5, patience=5, verbose=True)
+            scheduler = ReduceLROnPlateau(self.optimizer, mode='max', factor=0.5, patience=5)
         elif self.config.scheduler == 'cosine':
             scheduler = CosineAnnealingLR(self.optimizer, T_max=self.config.epochs, eta_min=1e-6)
         else:
