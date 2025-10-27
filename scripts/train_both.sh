@@ -5,7 +5,7 @@ echo "=================================="
 echo "Training U-Net and Baseline CNN"
 echo "=================================="
 
-# Train U-Net
+# Train U-Netwdawdawdawd
 echo "Training U-Net..."
 python train.py \
     --model unet \
@@ -14,6 +14,7 @@ python train.py \
     --lr 1e-4 \
     --save_dir experiments/unet \
     --loss bce_dice
+
 
 # Train Baseline CNN
 echo "Training Baseline CNN..."
