@@ -29,10 +29,24 @@ class BDD100KDrivableDataset(Dataset):
         self.binary = binary
         self.transform = transform
         
-        # Get all image filenames
-        self.images = sorted(os.listdir(self.image_dir))
+        # Get all mask filenames first (since not all images have masks)
+        all_masks = os.listdir(self.mask_dir)
         
-        print(f"Loaded {len(self.images)} images for {split} split")
+        # Extract image names from mask names
+        # Mask format: {image_name}_drivable_id.png
+        self.images = []
+        for mask_name in all_masks:
+            if mask_name.endswith('_drivable_id.png'):
+                # Remove '_drivable_id.png' to get image name
+                img_name = mask_name.replace('_drivable_id.png', '.jpg')
+                img_path = os.path.join(self.image_dir, img_name)
+                # Only add if image exists
+                if os.path.exists(img_path):
+                    self.images.append(img_name)
+        
+        self.images = sorted(self.images)
+        
+        print(f"Loaded {len(self.images)} images with masks for {split} split")
         
     def __len__(self):
         return len(self.images)
@@ -46,12 +60,7 @@ class BDD100KDrivableDataset(Dataset):
         # Load mask (replace .jpg with _drivable_id.png)
         mask_name = img_name.replace('.jpg', '_drivable_id.png')
         mask_path = os.path.join(self.mask_dir, mask_name)
-        
-        if os.path.exists(mask_path):
-            mask = np.array(Image.open(mask_path))
-        else:
-            # If mask doesn't exist, create zero mask
-            mask = np.zeros((image.shape[0], image.shape[1]), dtype=np.uint8)
+        mask = np.array(Image.open(mask_path))
         
         # Convert 3-class to binary
         # BDD100K drivable area labels: 0=background, 1=direct drivable, 2=alternative drivable

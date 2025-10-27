@@ -71,9 +71,10 @@ def visualize_predictions(images, masks, preds, num_samples=4, threshold=0.5, sa
         axes[idx, 0].set_title('Original Image')
         axes[idx, 0].axis('off')
         
-        # Show ground truth mask
-        axes[idx, 1].imshow(mask, cmap='gray')
-        axes[idx, 1].set_title('Ground Truth')
+        # Show ground truth mask (ensure it's in 0-1 range)
+        mask_vis = np.clip(mask, 0, 1)  # Ensure mask is in valid range
+        axes[idx, 1].imshow(mask_vis, cmap='gray', vmin=0, vmax=1)
+        axes[idx, 1].set_title(f'Ground Truth (range: {mask.min():.2f}-{mask.max():.2f})')
         axes[idx, 1].axis('off')
         
         # Show prediction probabilities
@@ -82,7 +83,7 @@ def visualize_predictions(images, masks, preds, num_samples=4, threshold=0.5, sa
         axes[idx, 2].axis('off')
         
         # Show binarized prediction
-        axes[idx, 3].imshow(pred_binary, cmap='gray')
+        axes[idx, 3].imshow(pred_binary, cmap='gray', vmin=0, vmax=1)
         axes[idx, 3].set_title(f'Prediction (Binary, th={threshold})')
         axes[idx, 3].axis('off')
     
