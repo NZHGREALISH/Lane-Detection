@@ -1,62 +1,62 @@
 # Drivable Area Segmentation
 
-基于BDD100K数据集的可行驶区域分割项目。
+A drivable area segmentation project based on the BDD100K dataset.
 
-## 项目简介
+## Project Overview
 
-本项目实现了用于自动驾驶场景的可行驶区域分割任务，使用BDD100K数据集训练深度学习模型来识别道路上的可行驶区域。
+This project implements drivable area segmentation for autonomous driving scenarios, training deep learning models to identify drivable areas on roads using the BDD100K dataset.
 
-## 项目结构
+## Project Structure
 
 ```
 Lane-Detection/
 ├── data/
-│   └── dataset.py          # 数据加载和预处理
+│   └── dataset.py          # Data loading and preprocessing
 ├── models/
-│   ├── unet.py            # U-Net模型
-│   └── baseline_cnn.py    # Baseline CNN模型
+│   ├── unet.py            # U-Net model
+│   └── baseline_cnn.py    # Baseline CNN model
 ├── utils/
-│   ├── losses.py          # 损失函数
-│   ├── metrics.py         # 评估指标
-│   └── visualization.py   # 可视化工具
-├── train.py               # 训练脚本
-├── evaluate.py            # 评估脚本
-├── config.py              # 配置文件
-├── run_experiments.py     # 实验对比脚本
-├── quick_test.py          # 快速测试脚本
-├── requirements.txt       # 依赖包
-└── README.md             # 项目说明
+│   ├── losses.py          # Loss functions
+│   ├── metrics.py         # Evaluation metrics
+│   └── visualization.py   # Visualization tools
+├── train.py               # Training script
+├── evaluate.py            # Evaluation script
+├── config.py              # Configuration file
+├── run_experiments.py     # Experiment comparison script
+├── quick_test.py          # Quick test script
+├── requirements.txt       # Dependencies
+└── README.md             # Project documentation
 ```
 
-## 环境配置
+## Environment Setup
 
-### 1. 安装依赖
+### 1. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. 数据集
+### 2. Dataset
 
-数据集已下载至: `/home/grealish/APS360/bdd100k_data`
+Dataset location: `/root/bdd100k_data`
 
-数据集结构:
-- 图像: `bdd100k_images/bdd100k/images/10k/{train,val,test}`
-- 标签: `bdd100k_drivable_maps/bdd100k/drivable_maps/labels/{train,val}`
+Dataset structure:
+- Images: `bdd100k_images/bdd100k/images/10k/{train,val,test}`
+- Labels: `bdd100k_drivable_maps/bdd100k/drivable_maps/labels/{train,val}`
 
-## 快速开始
+## Quick Start
 
-### 1. 快速测试
+### 1. Quick Test
 
-运行快速测试以验证环境配置:
+Run a quick test to verify environment configuration:
 
 ```bash
 python quick_test.py
 ```
 
-### 2. 训练模型
+### 2. Train Models
 
-#### 训练U-Net模型:
+#### Train U-Net model:
 
 ```bash
 python train.py \
@@ -67,7 +67,7 @@ python train.py \
     --save_dir experiments/unet
 ```
 
-#### 训练Baseline CNN模型:
+#### Train Baseline CNN model:
 
 ```bash
 python train.py \
@@ -78,7 +78,7 @@ python train.py \
     --save_dir experiments/baseline
 ```
 
-### 3. 评估模型
+### 3. Evaluate Models
 
 ```bash
 python evaluate.py \
@@ -88,125 +88,125 @@ python evaluate.py \
     --visualize
 ```
 
-### 4. 运行对比实验
+### 4. Run Comparison Experiments
 
-自动训练和对比U-Net与Baseline CNN:
+Automatically train and compare U-Net vs Baseline CNN:
 
 ```bash
 python run_experiments.py
 ```
 
-## 模型说明
+## Model Description
 
 ### U-Net
-- **结构**: Encoder-Decoder架构 + Skip Connections
-- **特点**: 能够捕获多尺度特征，适合语义分割任务
-- **参数量**: ~31M
+- **Architecture**: Encoder-Decoder with Skip Connections
+- **Features**: Captures multi-scale features, suitable for semantic segmentation
+- **Parameters**: ~31M
 
 ### Baseline CNN
-- **结构**: 简单的卷积编码器 + 上采样解码器
-- **特点**: 轻量级，训练速度快
-- **参数量**: ~3M
+- **Architecture**: Simple convolutional encoder + upsampling decoder
+- **Features**: Lightweight, fast training
+- **Parameters**: ~3M
 
-## 训练配置
+## Training Configuration
 
-### 损失函数
-- `bce_dice`: BCE Loss + Dice Loss (推荐)
+### Loss Functions
+- `bce_dice`: BCE Loss + Dice Loss (recommended)
 - `dice`: Dice Loss
 - `focal`: Focal Loss
 - `bce`: BCE Loss
 
-### 优化器
-- `adam`: Adam优化器 (推荐)
+### Optimizers
+- `adam`: Adam optimizer (recommended)
 - `sgd`: SGD with momentum
 
-### 学习率调度
+### Learning Rate Schedulers
 - `plateau`: ReduceLROnPlateau
 - `cosine`: CosineAnnealingLR
 
-## 评估指标
+## Evaluation Metrics
 
-- **IoU (Intersection over Union)**: 交并比
-- **mIoU (mean IoU)**: 平均交并比
-- **Dice Coefficient**: Dice系数
-- **Pixel Accuracy**: 像素准确率
-- **Precision/Recall/F1**: 精确率/召回率/F1分数
+- **IoU (Intersection over Union)**: Intersection over Union
+- **mIoU (mean IoU)**: Mean Intersection over Union
+- **Dice Coefficient**: Dice coefficient
+- **Pixel Accuracy**: Pixel-level accuracy
+- **Precision/Recall/F1**: Precision, Recall, and F1 score
 
-## 主要参数
+## Main Parameters
 
-| 参数 | 说明 | 默认值 |
-|------|------|--------|
-| `--model` | 模型类型 (unet/baseline) | unet |
-| `--batch_size` | 批次大小 | 16 |
-| `--epochs` | 训练轮数 | 50 |
-| `--lr` | 学习率 | 1e-4 |
-| `--image_size` | 图像大小 | 256 |
-| `--loss` | 损失函数 | bce_dice |
-| `--optimizer` | 优化器 | adam |
-| `--save_dir` | 保存目录 | experiments/unet_default |
+| Parameter | Description | Default Value |
+|-----------|-------------|---------------|
+| `--model` | Model type (unet/baseline) | unet |
+| `--batch_size` | Batch size | 16 |
+| `--epochs` | Number of epochs | 50 |
+| `--lr` | Learning rate | 1e-4 |
+| `--image_size` | Image size | 256 |
+| `--loss` | Loss function | bce_dice |
+| `--optimizer` | Optimizer | adam |
+| `--save_dir` | Save directory | experiments/unet_default |
 
-## 输出结果
+## Output Results
 
-### 训练输出
-- `checkpoints/`: 模型检查点
-- `visualizations/`: 训练过程可视化
-- `training_curves.png`: 训练曲线
-- `history.json`: 训练历史
+### Training Outputs
+- `checkpoints/`: Model checkpoints
+- `visualizations/`: Training visualization
+- `training_curves.png`: Training curves
+- `history.json`: Training history
 
-### 评估输出
-- `evaluation_results.json`: 评估结果
-- `visualizations/`: 预测可视化
+### Evaluation Outputs
+- `evaluation_results.json`: Evaluation results
+- `visualizations/`: Prediction visualizations
 
-## 数据增强
+## Data Augmentation
 
-训练时使用以下数据增强技术:
-- 随机水平翻转
-- 随机亮度/对比度调整
-- 颜色抖动
-- 平移/缩放/旋转
+Data augmentation techniques used during training:
+- Random horizontal flip
+- Random brightness/contrast adjustment
+- Color jitter
+- Translation/scaling/rotation
 
-## 性能对比
+## Performance Comparison
 
-运行 `run_experiments.py` 后会自动生成性能对比:
-- `comparison_results/comparison_table.csv`: 对比表格
-- `comparison_results/comparison_chart.png`: 对比图表
+After running `run_experiments.py`, performance comparison will be generated:
+- `comparison_results/comparison_table.csv`: Comparison table
+- `comparison_results/comparison_chart.png`: Comparison chart
 
-## 注意事项
+## Notes
 
-1. **GPU内存**: 如果GPU内存不足，可以减小 `batch_size` 或 `image_size`
-2. **训练时间**: 完整训练50个epoch约需要数小时 (取决于硬件)
-3. **数据路径**: 确保数据集路径正确配置
+1. **GPU Memory**: If GPU memory is insufficient, reduce `batch_size` or `image_size`
+2. **Training Time**: Complete 50-epoch training takes several hours (hardware dependent)
+3. **Data Path**: Ensure dataset paths are correctly configured
 
-## 实现特点
+## Implementation Features
 
-### 数据处理
-- ✅ 三分类转二分类 (背景 vs 可行驶区域)
-- ✅ 图像归一化 (ImageNet标准)
-- ✅ Albumentations数据增强
-- ✅ 动态处理缺失mask
+### Data Processing
+- ✅ 3-class to binary conversion (background vs drivable area)
+- ✅ Image normalization (ImageNet standards)
+- ✅ Albumentations data augmentation
+- ✅ Dynamic handling of missing masks
 
-### 模型架构
-- ✅ U-Net: 完整的encoder-decoder + skip connections
-- ✅ Baseline CNN: 轻量级卷积网络
-- ✅ BatchNorm + ReLU激活
-- ✅ 双线性插值上采样
+### Model Architecture
+- ✅ U-Net: Complete encoder-decoder + skip connections
+- ✅ Baseline CNN: Lightweight convolutional network
+- ✅ BatchNorm + ReLU activation
+- ✅ Bilinear interpolation upsampling
 
-### 训练策略
-- ✅ BCE + Dice组合损失
-- ✅ Adam优化器 + 学习率调度
-- ✅ 早停机制 (保存最佳模型)
-- ✅ 训练/验证指标监控
-- ✅ 定期可视化
+### Training Strategy
+- ✅ BCE + Dice combined loss
+- ✅ Adam optimizer + learning rate scheduling
+- ✅ Early stopping (saves best model)
+- ✅ Training/validation metrics monitoring
+- ✅ Periodic visualization
 
-### 评估系统
-- ✅ 多种评估指标 (IoU, Dice, Accuracy, F1)
-- ✅ 预测结果可视化
-- ✅ 叠加显示 (overlay)
-- ✅ 失败案例分析
+### Evaluation System
+- ✅ Multiple evaluation metrics (IoU, Dice, Accuracy, F1)
+- ✅ Prediction visualization
+- ✅ Overlay display
+- ✅ Failure case analysis
 
-## 使用示例
+## Usage Examples
 
-### 示例1: 训练高分辨率U-Net
+### Example 1: Train High-Resolution U-Net
 
 ```bash
 python train.py \
@@ -218,7 +218,7 @@ python train.py \
     --save_dir experiments/unet_512
 ```
 
-### 示例2: 使用Focal Loss
+### Example 2: Use Focal Loss
 
 ```bash
 python train.py \
@@ -227,7 +227,7 @@ python train.py \
     --save_dir experiments/unet_focal
 ```
 
-### 示例3: 评估并生成可视化
+### Example 3: Evaluate and Generate Visualizations
 
 ```bash
 python evaluate.py \
@@ -237,31 +237,27 @@ python evaluate.py \
     --visualize
 ```
 
-## 项目进度
+## Project Progress
 
-- [x] 数据集加载和预处理
-- [x] U-Net模型实现
-- [x] Baseline CNN模型实现
-- [x] 训练脚本
-- [x] 评估脚本
-- [x] 多种损失函数
-- [x] 评估指标
-- [x] 可视化工具
-- [x] 实验对比系统
+- [x] Dataset loading and preprocessing
+- [x] U-Net model implementation
+- [x] Baseline CNN model implementation
+- [x] Training script
+- [x] Evaluation script
+- [x] Multiple loss functions
+- [x] Evaluation metrics
+- [x] Visualization tools
+- [x] Experiment comparison system
 
-## 未来改进
+## Future Improvements
 
-- [ ] 添加更多模型架构 (DeepLabV3+, SegFormer等)
-- [ ] 支持多GPU训练
-- [ ] 添加测试集推理脚本
-- [ ] 实时推理demo
-- [ ] 模型压缩和加速
+- [ ] Add more model architectures (DeepLabV3+, SegFormer, etc.)
+- [ ] Support multi-GPU training
+- [ ] Add test set inference script
+- [ ] Real-time inference demo
+- [ ] Model compression and acceleration
 
-## 联系方式
+## Acknowledgments
 
-如有问题，请联系项目维护者。
-
-## 致谢
-
-- BDD100K数据集: https://bdd-data.berkeley.edu/
-- U-Net论文: https://arxiv.org/abs/1505.04597
+- BDD100K Dataset: https://bdd-data.berkeley.edu/
+- U-Net Paper: https://arxiv.org/abs/1505.04597

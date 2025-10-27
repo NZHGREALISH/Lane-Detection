@@ -23,15 +23,15 @@ class Evaluator:
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         print(f"Using device: {self.device}")
         
-        # 加载模型
+        # Load model
         self.model = self._load_model()
         self.model.to(self.device)
         self.model.eval()
         
-        # 加载数据
+        # Load data
         self.val_loader = self._build_dataloader()
         
-        # 结果存储
+        # Result storage
         self.results = {
             'iou': [],
             'miou': [],
@@ -43,7 +43,7 @@ class Evaluator:
         }
     
     def _load_model(self):
-        """加载模型"""
+        """Load model"""
         if self.config.model == 'unet':
             model = UNet(n_channels=3, n_classes=1, bilinear=True)
         elif self.config.model == 'baseline':
@@ -51,7 +51,7 @@ class Evaluator:
         else:
             raise ValueError(f"Unknown model: {self.config.model}")
         
-        # 加载权重
+        # Load weights
         checkpoint = torch.load(self.config.checkpoint, map_location=self.device)
         model.load_state_dict(checkpoint['model_state_dict'])
         
@@ -62,7 +62,7 @@ class Evaluator:
         return model
     
     def _build_dataloader(self):
-        """构建数据加载器"""
+        """Build data loader"""
         val_dataset = BDD100KDrivableDataset(
             image_dir=self.config.image_dir,
             mask_dir=self.config.mask_dir,
@@ -85,11 +85,11 @@ class Evaluator:
     
     @torch.no_grad()
     def evaluate(self):
-        """评估模型"""
+        """Evaluate model"""
         print("\nStarting evaluation...")
         print("="*80)
         
-        # 保存样本用于可视化
+        # Save samples for visualization
         sample_images = []
         sample_masks = []
         sample_preds = []
@@ -99,18 +99,18 @@ class Evaluator:
             images = images.to(self.device)
             masks = masks.to(self.device)
             
-            # 前向传播
+            # Forward pass
             logits = self.model(images)
             probs = torch.sigmoid(logits)
             
-            # 计算指标
+            # Calculate metrics
             iou = calculate_iou(probs, masks, threshold=self.config.threshold)
             miou, _ = calculate_miou(probs, masks, num_classes=2, threshold=self.config.threshold)
             dice = calculate_dice_coefficient(probs, masks, threshold=self.config.threshold)
             acc = calculate_pixel_accuracy(probs, masks, threshold=self.config.threshold)
             precision, recall, f1 = calculate_precision_recall_f1(probs, masks, threshold=self.config.threshold)
             
-            # 记录结果
+            # Record results
             self.results['iou'].append(iou)
             self.results['miou'].append(miou)
             self.results['dice'].append(dice)
@@ -119,7 +119,7 @@ class Evaluator:
             self.results['recall'].append(recall)
             self.results['f1'].append(f1)
             
-            # 保存样本
+            # Save samples
             if len(sample_images) < self.config.num_vis_samples:
                 sample_images.append(images.cpu())
                 sample_masks.append(masks.cpu())
@@ -130,11 +130,11 @@ class Evaluator:
                 'Dice': f'{dice:.4f}'
             })
         
-        # 计算平均指标
+        # Calculate average metrics
         avg_results = {k: np.mean(v) for k, v in self.results.items()}
         std_results = {k: np.std(v) for k, v in self.results.items()}
         
-        # 打印结果
+        # Print results
         print("\n" + "="*80)
         print("Evaluation Results:")
         print("-"*80)
@@ -147,11 +147,11 @@ class Evaluator:
         print(f"F1 Score:      {avg_results['f1']:.4f} ± {std_results['f1']:.4f}")
         print("="*80)
         
-        # 保存结果
+        # Save results
         if self.config.save_results:
             self.save_results(avg_results, std_results)
         
-        # 可视化
+        # Visualization
         if sample_images and self.config.visualize:
             sample_images = torch.cat(sample_images, dim=0)
             sample_masks = torch.cat(sample_masks, dim=0)
@@ -162,7 +162,7 @@ class Evaluator:
         return avg_results
     
     def save_results(self, avg_results, std_results):
-        """保存评估结果"""
+        """Save evaluation results"""
         results = {
             'average': avg_results,
             'std': std_results,
@@ -178,17 +178,17 @@ class Evaluator:
         print(f"\nResults saved to {save_path}")
     
     def visualize_results(self, images, masks, preds):
-        """可视化结果"""
+        """Visualize results"""
         print("\nGenerating visualizations...")
         
         os.makedirs(os.path.join(self.config.save_dir, 'visualizations'), exist_ok=True)
         
-        # 标准可视化
+        # Standard visualization
         vis_path = os.path.join(self.config.save_dir, 'visualizations', 'predictions.png')
         visualize_predictions(images[:8], masks[:8], preds[:8], 
                             num_samples=8, threshold=self.config.threshold, save_path=vis_path)
         
-        # 叠加可视化
+        # Overlay visualization
         overlay_path = os.path.join(self.config.save_dir, 'visualizations', 'overlay.png')
         visualize_overlay(images[:8], masks[:8], preds[:8], 
                          num_samples=8, threshold=self.config.threshold, save_path=overlay_path)
@@ -199,39 +199,39 @@ class Evaluator:
 def parse_args():
     parser = argparse.ArgumentParser(description='Evaluate Drivable Area Segmentation Model')
     
-    # 数据相关
+    # Data related
     parser.add_argument('--image_dir', type=str,
-                       default='/home/grealish/APS360/bdd100k_data/bdd100k_images/bdd100k/images/10k',
-                       help='图像目录路径')
+                       default='/root/bdd100k_data/bdd100k_images/bdd100k/images/10k',
+                       help='Image directory path')
     parser.add_argument('--mask_dir', type=str,
-                       default='/home/grealish/APS360/bdd100k_data/bdd100k_drivable_maps/bdd100k/drivable_maps/labels',
-                       help='mask目录路径')
-    parser.add_argument('--image_size', type=int, default=256, help='输入图像大小')
+                       default='/root/bdd100k_data/bdd100k_drivable_maps/bdd100k/drivable_maps/labels',
+                       help='Mask directory path')
+    parser.add_argument('--image_size', type=int, default=256, help='Input image size')
     
-    # 模型相关
+    # Model related
     parser.add_argument('--model', type=str, default='unet', choices=['unet', 'baseline'],
-                       help='模型类型')
-    parser.add_argument('--checkpoint', type=str, required=True, help='模型检查点路径')
+                       help='Model type')
+    parser.add_argument('--checkpoint', type=str, required=True, help='Model checkpoint path')
     
-    # 评估相关
-    parser.add_argument('--batch_size', type=int, default=16, help='批次大小')
-    parser.add_argument('--threshold', type=float, default=0.5, help='二值化阈值')
-    parser.add_argument('--num_workers', type=int, default=4, help='数据加载线程数')
+    # Evaluation related
+    parser.add_argument('--batch_size', type=int, default=16, help='Batch size')
+    parser.add_argument('--threshold', type=float, default=0.5, help='Binary threshold')
+    parser.add_argument('--num_workers', type=int, default=4, help='Number of data loading workers')
     
-    # 输出相关
-    parser.add_argument('--save_dir', type=str, default='evaluation_results', help='保存目录')
-    parser.add_argument('--save_results', action='store_true', default=True, help='保存结果')
-    parser.add_argument('--visualize', action='store_true', default=True, help='可视化结果')
-    parser.add_argument('--num_vis_samples', type=int, default=16, help='可视化样本数')
+    # Output related
+    parser.add_argument('--save_dir', type=str, default='evaluation_results', help='Save directory')
+    parser.add_argument('--save_results', action='store_true', default=True, help='Save results')
+    parser.add_argument('--visualize', action='store_true', default=True, help='Visualize results')
+    parser.add_argument('--num_vis_samples', type=int, default=16, help='Number of visualization samples')
     
     return parser.parse_args()
 
 
 def main():
-    # 解析参数
+    # Parse arguments
     config = parse_args()
     
-    # 创建评估器并评估
+    # Create evaluator and evaluate
     evaluator = Evaluator(config)
     evaluator.evaluate()
 

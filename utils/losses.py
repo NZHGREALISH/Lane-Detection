@@ -8,7 +8,7 @@ import torch.nn.functional as F
 
 class DiceLoss(nn.Module):
     """
-    Dice Loss用于处理类别不平衡问题
+    Dice Loss for handling class imbalance
     """
     def __init__(self, smooth=1e-6):
         super(DiceLoss, self).__init__()
@@ -17,17 +17,17 @@ class DiceLoss(nn.Module):
     def forward(self, logits, targets):
         """
         Args:
-            logits: 模型输出 [B, 1, H, W]
-            targets: 目标mask [B, 1, H, W]
+            logits: Model output [B, 1, H, W]
+            targets: Target mask [B, 1, H, W]
         """
-        # 应用sigmoid
+        # Apply sigmoid
         probs = torch.sigmoid(logits)
         
-        # 展平
+        # Flatten
         probs = probs.view(-1)
         targets = targets.view(-1)
         
-        # 计算Dice系数
+        # Calculate Dice coefficient
         intersection = (probs * targets).sum()
         dice = (2. * intersection + self.smooth) / (probs.sum() + targets.sum() + self.smooth)
         
@@ -37,7 +37,7 @@ class DiceLoss(nn.Module):
 
 class BCEDiceLoss(nn.Module):
     """
-    组合BCE Loss和Dice Loss
+    Combined BCE Loss and Dice Loss
     """
     def __init__(self, bce_weight=0.5, dice_weight=0.5):
         super(BCEDiceLoss, self).__init__()
@@ -49,8 +49,8 @@ class BCEDiceLoss(nn.Module):
     def forward(self, logits, targets):
         """
         Args:
-            logits: 模型输出 [B, 1, H, W]
-            targets: 目标mask [B, 1, H, W]
+            logits: Model output [B, 1, H, W]
+            targets: Target mask [B, 1, H, W]
         """
         bce_loss = self.bce(logits, targets)
         dice_loss = self.dice(logits, targets)
@@ -62,7 +62,7 @@ class BCEDiceLoss(nn.Module):
 
 class FocalLoss(nn.Module):
     """
-    Focal Loss用于处理难样本
+    Focal Loss for handling hard examples
     """
     def __init__(self, alpha=0.25, gamma=2.0):
         super(FocalLoss, self).__init__()
@@ -72,13 +72,13 @@ class FocalLoss(nn.Module):
     def forward(self, logits, targets):
         """
         Args:
-            logits: 模型输出 [B, 1, H, W]
-            targets: 目标mask [B, 1, H, W]
+            logits: Model output [B, 1, H, W]
+            targets: Target mask [B, 1, H, W]
         """
         # BCE loss
         bce_loss = F.binary_cross_entropy_with_logits(logits, targets, reduction='none')
         
-        # 概率
+        # Probabilities
         probs = torch.sigmoid(logits)
         pt = torch.where(targets == 1, probs, 1 - probs)
         
@@ -95,24 +95,24 @@ class FocalLoss(nn.Module):
 
 
 if __name__ == '__main__':
-    # 测试损失函数
+    # Test loss functions
     batch_size = 4
     height, width = 256, 256
     
     logits = torch.randn(batch_size, 1, height, width)
     targets = torch.randint(0, 2, (batch_size, 1, height, width)).float()
     
-    # 测试Dice Loss
+    # Test Dice Loss
     dice_loss = DiceLoss()
     loss = dice_loss(logits, targets)
     print(f"Dice Loss: {loss.item():.4f}")
     
-    # 测试BCE+Dice Loss
+    # Test BCE+Dice Loss
     bce_dice_loss = BCEDiceLoss()
     loss = bce_dice_loss(logits, targets)
     print(f"BCE+Dice Loss: {loss.item():.4f}")
     
-    # 测试Focal Loss
+    # Test Focal Loss
     focal_loss = FocalLoss()
     loss = focal_loss(logits, targets)
     print(f"Focal Loss: {loss.item():.4f}")

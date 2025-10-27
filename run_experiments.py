@@ -1,5 +1,5 @@
 """
-运行实验脚本：对比U-Net和Baseline CNN
+Run Experiments Script: Compare U-Net and Baseline CNN
 """
 import os
 import subprocess
@@ -9,12 +9,12 @@ import matplotlib.pyplot as plt
 
 
 def run_experiment(model_name, config_args):
-    """运行单个实验"""
+    """Run a single experiment"""
     print("\n" + "="*80)
     print(f"Running experiment: {model_name}")
     print("="*80 + "\n")
     
-    # 构建命令
+    # Build command
     cmd = [
         'python', 'train.py',
         '--model', config_args['model'],
@@ -28,7 +28,7 @@ def run_experiment(model_name, config_args):
         '--scheduler', config_args.get('scheduler', 'plateau'),
     ]
     
-    # 运行训练
+    # Run training
     result = subprocess.run(cmd)
     
     if result.returncode != 0:
@@ -40,8 +40,8 @@ def run_experiment(model_name, config_args):
 
 
 def evaluate_model(model_name, checkpoint_path, save_dir):
-    """评估模型"""
-    print(f"\n评估模型: {model_name}")
+    """Evaluate model"""
+    print(f"\nEvaluating model: {model_name}")
     
     cmd = [
         'python', 'evaluate.py',
@@ -57,7 +57,7 @@ def evaluate_model(model_name, checkpoint_path, save_dir):
         print(f"❌ Evaluation {model_name} failed!")
         return None
     
-    # 读取结果
+    # Read results
     results_path = os.path.join(save_dir, 'evaluation_results.json')
     if os.path.exists(results_path):
         with open(results_path, 'r') as f:
@@ -68,24 +68,24 @@ def evaluate_model(model_name, checkpoint_path, save_dir):
 
 
 def compare_models(results_dict, save_path='comparison'):
-    """对比模型性能"""
+    """Compare model performance"""
     os.makedirs(save_path, exist_ok=True)
     
-    # 创建对比表格
+    # Create comparison table
     df = pd.DataFrame(results_dict).T
     df = df.round(4)
     
     print("\n" + "="*80)
-    print("模型性能对比")
+    print("Model Performance Comparison")
     print("="*80)
     print(df.to_string())
     
-    # 保存表格
+    # Save table
     table_path = os.path.join(save_path, 'comparison_table.csv')
     df.to_csv(table_path)
-    print(f"\n对比表格已保存到: {table_path}")
+    print(f"\nComparison table saved to: {table_path}")
     
-    # 绘制对比图
+    # Plot comparison chart
     metrics = ['iou', 'dice', 'pixel_acc', 'f1']
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
     axes = axes.flatten()
@@ -99,24 +99,24 @@ def compare_models(results_dict, save_path='comparison'):
             axes[idx].grid(axis='y', alpha=0.3)
             axes[idx].set_ylim([0, 1])
             
-            # 添加数值标签
+            # Add value labels
             for i, v in enumerate(df[metric]):
                 axes[idx].text(i, v + 0.02, f'{v:.4f}', ha='center', va='bottom')
     
     plt.tight_layout()
     chart_path = os.path.join(save_path, 'comparison_chart.png')
     plt.savefig(chart_path, dpi=150, bbox_inches='tight')
-    print(f"对比图表已保存到: {chart_path}")
+    print(f"Comparison chart saved to: {chart_path}")
     plt.close()
 
 
 def main():
-    """主函数"""
+    """Main function"""
     print("="*80)
-    print("Drivable Area Segmentation - 实验对比")
+    print("Drivable Area Segmentation - Experiment Comparison")
     print("="*80)
     
-    # 定义实验配置
+    # Define experiment configurations
     experiments = {
         'U-Net': {
             'model': 'unet',
@@ -142,16 +142,16 @@ def main():
         }
     }
     
-    # 运行实验
+    # Run experiments
     experiment_dirs = {}
     for exp_name, exp_config in experiments.items():
         exp_dir = run_experiment(exp_name, exp_config)
         if exp_dir:
             experiment_dirs[exp_name] = exp_dir
     
-    # 评估模型
+    # Evaluate models
     print("\n" + "="*80)
-    print("开始评估模型")
+    print("Starting Model Evaluation")
     print("="*80)
     
     results = {}
@@ -165,12 +165,12 @@ def main():
             if result:
                 results[exp_name] = result
     
-    # 对比结果
+    # Compare results
     if len(results) > 0:
         compare_models(results, save_path='comparison_results')
     
     print("\n" + "="*80)
-    print("所有实验完成！")
+    print("All experiments completed!")
     print("="*80)
 
 

@@ -8,12 +8,12 @@ import torch.nn.functional as F
 
 class BaselineCNN(nn.Module):
     """
-    简单的Baseline CNN用于语义分割
-    基本结构: 卷积下采样 -> 上采样
+    Simple Baseline CNN for semantic segmentation
+    Basic structure: Convolutional downsampling -> Upsampling
     
     Args:
-        n_channels: 输入通道数 (RGB为3)
-        n_classes: 输出类别数 (二分类为1)
+        n_channels: Number of input channels (3 for RGB)
+        n_classes: Number of output classes (1 for binary classification)
     """
     
     def __init__(self, n_channels=3, n_classes=1):
@@ -21,7 +21,7 @@ class BaselineCNN(nn.Module):
         self.n_channels = n_channels
         self.n_classes = n_classes
         
-        # Encoder - 卷积下采样
+        # Encoder - Convolutional downsampling
         self.conv1 = nn.Sequential(
             nn.Conv2d(n_channels, 32, kernel_size=3, padding=1),
             nn.BatchNorm2d(32),
@@ -62,7 +62,7 @@ class BaselineCNN(nn.Module):
             nn.MaxPool2d(2)  # 16x16
         )
         
-        # Decoder - 上采样
+        # Decoder - Upsampling
         self.upconv1 = nn.Sequential(
             nn.Conv2d(256, 128, kernel_size=3, padding=1),
             nn.BatchNorm2d(128),
@@ -113,14 +113,14 @@ class BaselineCNN(nn.Module):
 
 
 if __name__ == '__main__':
-    # 测试模型
+    # Test model
     model = BaselineCNN(n_channels=3, n_classes=1)
     x = torch.randn(2, 3, 256, 256)
     output = model(x)
     print(f"Input shape: {x.shape}")
     print(f"Output shape: {output.shape}")
     
-    # 计算参数量
+    # Calculate parameters
     total_params = sum(p.numel() for p in model.parameters())
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"Total parameters: {total_params:,}")

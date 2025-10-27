@@ -8,31 +8,31 @@ from sklearn.metrics import confusion_matrix
 
 def calculate_iou(pred, target, threshold=0.5):
     """
-    计算IoU (Intersection over Union)
+    Calculate IoU (Intersection over Union)
     
     Args:
-        pred: 预测概率 [B, 1, H, W] 或 [B, H, W]
-        target: 目标mask [B, 1, H, W] 或 [B, H, W]
-        threshold: 二值化阈值
+        pred: Predicted probabilities [B, 1, H, W] or [B, H, W]
+        target: Target mask [B, 1, H, W] or [B, H, W]
+        threshold: Binary threshold
     
     Returns:
-        iou: IoU值
+        iou: IoU value
     """
-    # 确保维度一致
+    # Ensure consistent dimensions
     if pred.dim() == 4:
         pred = pred.squeeze(1)
     if target.dim() == 4:
         target = target.squeeze(1)
     
-    # 二值化预测
+    # Binarize predictions
     pred_binary = (pred > threshold).float()
     target_binary = target.float()
     
-    # 计算交集和并集
+    # Calculate intersection and union
     intersection = (pred_binary * target_binary).sum()
     union = pred_binary.sum() + target_binary.sum() - intersection
     
-    # 避免除以0
+    # Avoid division by zero
     if union == 0:
         return 1.0 if intersection == 0 else 0.0
     
@@ -42,29 +42,29 @@ def calculate_iou(pred, target, threshold=0.5):
 
 def calculate_miou(pred, target, num_classes=2, threshold=0.5):
     """
-    计算mIoU (mean Intersection over Union)
+    Calculate mIoU (mean Intersection over Union)
     
     Args:
-        pred: 预测概率 [B, 1, H, W]
-        target: 目标mask [B, 1, H, W]
-        num_classes: 类别数
-        threshold: 二值化阈值
+        pred: Predicted probabilities [B, 1, H, W]
+        target: Target mask [B, 1, H, W]
+        num_classes: Number of classes
+        threshold: Binary threshold
     
     Returns:
-        miou: mIoU值
-        iou_per_class: 每个类别的IoU
+        miou: mIoU value
+        iou_per_class: IoU per class
     """
-    # 确保维度一致
+    # Ensure consistent dimensions
     if pred.dim() == 4:
         pred = pred.squeeze(1)
     if target.dim() == 4:
         target = target.squeeze(1)
     
-    # 二值化预测
+    # Binarize predictions
     pred_binary = (pred > threshold).long()
     target_binary = target.long()
     
-    # 展平
+    # Flatten
     pred_flat = pred_binary.view(-1).cpu().numpy()
     target_flat = target_binary.view(-1).cpu().numpy()
     
@@ -91,27 +91,27 @@ def calculate_miou(pred, target, num_classes=2, threshold=0.5):
 
 def calculate_pixel_accuracy(pred, target, threshold=0.5):
     """
-    计算像素准确率
+    Calculate pixel accuracy
     
     Args:
-        pred: 预测概率 [B, 1, H, W]
-        target: 目标mask [B, 1, H, W]
-        threshold: 二值化阈值
+        pred: Predicted probabilities [B, 1, H, W]
+        target: Target mask [B, 1, H, W]
+        threshold: Binary threshold
     
     Returns:
-        accuracy: 像素准确率
+        accuracy: Pixel accuracy
     """
-    # 确保维度一致
+    # Ensure consistent dimensions
     if pred.dim() == 4:
         pred = pred.squeeze(1)
     if target.dim() == 4:
         target = target.squeeze(1)
     
-    # 二值化预测
+    # Binarize predictions
     pred_binary = (pred > threshold).float()
     target_binary = target.float()
     
-    # 计算准确率
+    # Calculate accuracy
     correct = (pred_binary == target_binary).sum()
     total = target_binary.numel()
     accuracy = correct / total
@@ -121,27 +121,27 @@ def calculate_pixel_accuracy(pred, target, threshold=0.5):
 
 def calculate_dice_coefficient(pred, target, threshold=0.5):
     """
-    计算Dice系数
+    Calculate Dice coefficient
     
     Args:
-        pred: 预测概率 [B, 1, H, W]
-        target: 目标mask [B, 1, H, W]
-        threshold: 二值化阈值
+        pred: Predicted probabilities [B, 1, H, W]
+        target: Target mask [B, 1, H, W]
+        threshold: Binary threshold
     
     Returns:
-        dice: Dice系数
+        dice: Dice coefficient
     """
-    # 确保维度一致
+    # Ensure consistent dimensions
     if pred.dim() == 4:
         pred = pred.squeeze(1)
     if target.dim() == 4:
         target = target.squeeze(1)
     
-    # 二值化预测
+    # Binarize predictions
     pred_binary = (pred > threshold).float()
     target_binary = target.float()
     
-    # 计算Dice系数
+    # Calculate Dice coefficient
     intersection = (pred_binary * target_binary).sum()
     dice = (2. * intersection) / (pred_binary.sum() + target_binary.sum() + 1e-6)
     
@@ -150,32 +150,32 @@ def calculate_dice_coefficient(pred, target, threshold=0.5):
 
 def calculate_precision_recall_f1(pred, target, threshold=0.5):
     """
-    计算Precision, Recall, F1 Score
+    Calculate Precision, Recall, F1 Score
     
     Args:
-        pred: 预测概率 [B, 1, H, W]
-        target: 目标mask [B, 1, H, W]
-        threshold: 二值化阈值
+        pred: Predicted probabilities [B, 1, H, W]
+        target: Target mask [B, 1, H, W]
+        threshold: Binary threshold
     
     Returns:
-        precision, recall, f1: 各项指标
+        precision, recall, f1: Metric values
     """
-    # 确保维度一致
+    # Ensure consistent dimensions
     if pred.dim() == 4:
         pred = pred.squeeze(1)
     if target.dim() == 4:
         target = target.squeeze(1)
     
-    # 二值化预测
+    # Binarize predictions
     pred_binary = (pred > threshold).float()
     target_binary = target.float()
     
-    # 计算TP, FP, FN
+    # Calculate TP, FP, FN
     tp = (pred_binary * target_binary).sum()
     fp = (pred_binary * (1 - target_binary)).sum()
     fn = ((1 - pred_binary) * target_binary).sum()
     
-    # 计算指标
+    # Calculate metrics
     precision = tp / (tp + fp + 1e-6)
     recall = tp / (tp + fn + 1e-6)
     f1 = 2 * precision * recall / (precision + recall + 1e-6)
@@ -184,7 +184,7 @@ def calculate_precision_recall_f1(pred, target, threshold=0.5):
 
 
 if __name__ == '__main__':
-    # 测试指标
+    # Test metrics
     batch_size = 4
     height, width = 256, 256
     

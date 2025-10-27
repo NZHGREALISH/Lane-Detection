@@ -26,24 +26,24 @@ class Trainer:
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         print(f"Using device: {self.device}")
         
-        # 创建保存目录
+        # Create save directories
         os.makedirs(config.save_dir, exist_ok=True)
         os.makedirs(os.path.join(config.save_dir, 'checkpoints'), exist_ok=True)
         os.makedirs(os.path.join(config.save_dir, 'visualizations'), exist_ok=True)
         
-        # 初始化模型
+        # Initialize model
         self.model = self._build_model()
         self.model.to(self.device)
         
-        # 初始化数据加载器
+        # Initialize data loaders
         self.train_loader, self.val_loader = self._build_dataloaders()
         
-        # 初始化损失函数和优化器
+        # Initialize loss function and optimizer
         self.criterion = self._build_criterion()
         self.optimizer = self._build_optimizer()
         self.scheduler = self._build_scheduler()
         
-        # 训练历史
+        # Training history
         self.history = {
             'train_loss': [], 'val_loss': [],
             'train_iou': [], 'val_iou': [],
@@ -55,7 +55,7 @@ class Trainer:
         self.best_epoch = 0
     
     def _build_model(self):
-        """构建模型"""
+        """Build model"""
         if self.config.model == 'unet':
             model = UNet(n_channels=3, n_classes=1, bilinear=True)
             print("Using U-Net model")
@@ -65,7 +65,7 @@ class Trainer:
         else:
             raise ValueError(f"Unknown model: {self.config.model}")
         
-        # 打印模型参数量
+        # Print model parameters
         total_params = sum(p.numel() for p in model.parameters())
         trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
         print(f"Total parameters: {total_params:,}")
@@ -74,7 +74,7 @@ class Trainer:
         return model
     
     def _build_dataloaders(self):
-        """构建数据加载器"""
+        """Build data loaders"""
         train_dataset = BDD100KDrivableDataset(
             image_dir=self.config.image_dir,
             mask_dir=self.config.mask_dir,
@@ -113,7 +113,7 @@ class Trainer:
         return train_loader, val_loader
     
     def _build_criterion(self):
-        """构建损失函数"""
+        """Build loss function"""
         if self.config.loss == 'bce_dice':
             criterion = BCEDiceLoss(bce_weight=0.5, dice_weight=0.5)
         elif self.config.loss == 'dice':
@@ -129,7 +129,7 @@ class Trainer:
         return criterion
     
     def _build_optimizer(self):
-        """构建优化器"""
+        """Build optimizer"""
         if self.config.optimizer == 'adam':
             optimizer = Adam(self.model.parameters(), lr=self.config.lr, weight_decay=self.config.weight_decay)
         elif self.config.optimizer == 'sgd':
@@ -141,7 +141,7 @@ class Trainer:
         return optimizer
     
     def _build_scheduler(self):
-        """构建学习率调度器"""
+        """Build learning rate scheduler"""
         if self.config.scheduler == 'plateau':
             scheduler = ReduceLROnPlateau(self.optimizer, mode='max', factor=0.5, patience=5, verbose=True)
         elif self.config.scheduler == 'cosine':
@@ -154,7 +154,7 @@ class Trainer:
         return scheduler
     
     def train_epoch(self):
-        """训练一个epoch"""
+        """Train one epoch"""
         self.model.train()
         
         running_loss = 0.0
@@ -167,16 +167,16 @@ class Trainer:
             images = images.to(self.device)
             masks = masks.to(self.device)
             
-            # 前向传播
+            # Forward pass
             self.optimizer.zero_grad()
             logits = self.model(images)
             loss = self.criterion(logits, masks)
             
-            # 反向传播
+            # Backward pass
             loss.backward()
             self.optimizer.step()
             
-            # 计算指标
+            # Calculate metrics
             with torch.no_grad():
                 probs = torch.sigmoid(logits)
                 iou = calculate_iou(probs, masks)
@@ -202,7 +202,7 @@ class Trainer:
     
     @torch.no_grad()
     def validate_epoch(self):
-        """验证一个epoch"""
+        """Validate one epoch"""
         self.model.eval()
         
         running_loss = 0.0
@@ -210,7 +210,7 @@ class Trainer:
         running_dice = 0.0
         running_acc = 0.0
         
-        # 保存一些样本用于可视化
+        # Save some samples for visualization
         sample_images = []
         sample_masks = []
         sample_preds = []
@@ -220,11 +220,11 @@ class Trainer:
             images = images.to(self.device)
             masks = masks.to(self.device)
             
-            # 前向传播
+            # Forward pass
             logits = self.model(images)
             loss = self.criterion(logits, masks)
             
-            # 计算指标
+            # Calculate metrics
             probs = torch.sigmoid(logits)
             iou = calculate_iou(probs, masks)
             dice = calculate_dice_coefficient(probs, masks)
@@ -235,7 +235,7 @@ class Trainer:
             running_dice += dice
             running_acc += acc
             
-            # 保存样本
+            # Save samples
             if len(sample_images) < 8:
                 sample_images.append(images.cpu())
                 sample_masks.append(masks.cpu())
@@ -251,7 +251,7 @@ class Trainer:
         epoch_dice = running_dice / len(self.val_loader)
         epoch_acc = running_acc / len(self.val_loader)
         
-        # 合并样本
+        # Concatenate samples
         if sample_images:
             sample_images = torch.cat(sample_images, dim=0)
             sample_masks = torch.cat(sample_masks, dim=0)
@@ -260,7 +260,7 @@ class Trainer:
         return epoch_loss, epoch_iou, epoch_dice, epoch_acc, (sample_images, sample_masks, sample_preds)
     
     def train(self):
-        """完整训练流程"""
+        """Complete training loop"""
         print(f"\nStarting training for {self.config.epochs} epochs...")
         print("="*80)
         
@@ -268,13 +268,13 @@ class Trainer:
             print(f"\nEpoch {epoch}/{self.config.epochs}")
             print("-"*80)
             
-            # 训练
+            # Train
             train_loss, train_iou, train_dice, train_acc = self.train_epoch()
             
-            # 验证
+            # Validate
             val_loss, val_iou, val_dice, val_acc, samples = self.validate_epoch()
             
-            # 记录历史
+            # Record history
             self.history['train_loss'].append(train_loss)
             self.history['val_loss'].append(val_loss)
             self.history['train_iou'].append(train_iou)
@@ -284,29 +284,29 @@ class Trainer:
             self.history['train_acc'].append(train_acc)
             self.history['val_acc'].append(val_acc)
             
-            # 打印结果
+            # Print results
             print(f"\nTrain - Loss: {train_loss:.4f}, IoU: {train_iou:.4f}, Dice: {train_dice:.4f}, Acc: {train_acc:.4f}")
             print(f"Val   - Loss: {val_loss:.4f}, IoU: {val_iou:.4f}, Dice: {val_dice:.4f}, Acc: {val_acc:.4f}")
             
-            # 更新学习率
+            # Update learning rate
             if self.scheduler:
                 if isinstance(self.scheduler, ReduceLROnPlateau):
                     self.scheduler.step(val_iou)
                 else:
                     self.scheduler.step()
             
-            # 保存最佳模型
+            # Save best model
             if val_iou > self.best_val_iou:
                 self.best_val_iou = val_iou
                 self.best_epoch = epoch
                 self.save_checkpoint('best_model.pth')
                 print(f"✓ Best model saved! (IoU: {val_iou:.4f})")
             
-            # 定期保存检查点
+            # Save checkpoints periodically
             if epoch % self.config.save_interval == 0:
                 self.save_checkpoint(f'checkpoint_epoch_{epoch}.pth')
             
-            # 可视化预测结果
+            # Visualize predictions
             if epoch % self.config.vis_interval == 0:
                 vis_path = os.path.join(self.config.save_dir, 'visualizations', f'epoch_{epoch}.png')
                 visualize_predictions(samples[0][:4], samples[1][:4], samples[2][:4], 
@@ -315,15 +315,15 @@ class Trainer:
         print("\n" + "="*80)
         print(f"Training completed! Best IoU: {self.best_val_iou:.4f} at epoch {self.best_epoch}")
         
-        # 保存训练历史
+        # Save training history
         self.save_history()
         
-        # 绘制训练曲线
+        # Plot training curves
         plot_path = os.path.join(self.config.save_dir, 'training_curves.png')
         plot_training_curves(self.history, save_path=plot_path)
     
     def save_checkpoint(self, filename):
-        """保存检查点"""
+        """Save checkpoint"""
         checkpoint = {
             'model_state_dict': self.model.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
@@ -340,7 +340,7 @@ class Trainer:
         torch.save(checkpoint, save_path)
     
     def save_history(self):
-        """保存训练历史"""
+        """Save training history"""
         history_path = os.path.join(self.config.save_dir, 'history.json')
         with open(history_path, 'w') as f:
             json.dump(self.history, f, indent=4)
@@ -350,44 +350,44 @@ class Trainer:
 def parse_args():
     parser = argparse.ArgumentParser(description='Train Drivable Area Segmentation Model')
     
-    # 数据相关
+    # Data related
     parser.add_argument('--image_dir', type=str, 
-                       default='/home/grealish/APS360/bdd100k_data/bdd100k_images/bdd100k/images/10k',
-                       help='图像目录路径')
+                       default='/root/bdd100k_data/bdd100k_images/bdd100k/images/10k',
+                       help='Image directory path')
     parser.add_argument('--mask_dir', type=str,
-                       default='/home/grealish/APS360/bdd100k_data/bdd100k_drivable_maps/bdd100k/drivable_maps/labels',
-                       help='mask目录路径')
-    parser.add_argument('--image_size', type=int, default=256, help='输入图像大小')
+                       default='/root/bdd100k_data/bdd100k_drivable_maps/bdd100k/drivable_maps/labels',
+                       help='Mask directory path')
+    parser.add_argument('--image_size', type=int, default=256, help='Input image size')
     
-    # 模型相关
+    # Model related
     parser.add_argument('--model', type=str, default='unet', choices=['unet', 'baseline'],
-                       help='模型类型')
+                       help='Model type')
     
-    # 训练相关
-    parser.add_argument('--batch_size', type=int, default=16, help='批次大小')
-    parser.add_argument('--epochs', type=int, default=50, help='训练轮数')
-    parser.add_argument('--lr', type=float, default=1e-4, help='学习率')
-    parser.add_argument('--weight_decay', type=float, default=1e-5, help='权重衰减')
+    # Training related
+    parser.add_argument('--batch_size', type=int, default=16, help='Batch size')
+    parser.add_argument('--epochs', type=int, default=50, help='Number of epochs')
+    parser.add_argument('--lr', type=float, default=1e-4, help='Learning rate')
+    parser.add_argument('--weight_decay', type=float, default=1e-5, help='Weight decay')
     parser.add_argument('--optimizer', type=str, default='adam', choices=['adam', 'sgd'],
-                       help='优化器')
+                       help='Optimizer')
     parser.add_argument('--scheduler', type=str, default='plateau', choices=['plateau', 'cosine', 'none'],
-                       help='学习率调度器')
+                       help='Learning rate scheduler')
     parser.add_argument('--loss', type=str, default='bce_dice', 
                        choices=['bce_dice', 'dice', 'focal', 'bce'],
-                       help='损失函数')
+                       help='Loss function')
     
-    # 其他
-    parser.add_argument('--num_workers', type=int, default=4, help='数据加载线程数')
-    parser.add_argument('--save_dir', type=str, default='experiments/unet_default', help='保存目录')
-    parser.add_argument('--save_interval', type=int, default=10, help='保存检查点间隔')
-    parser.add_argument('--vis_interval', type=int, default=5, help='可视化间隔')
-    parser.add_argument('--seed', type=int, default=42, help='随机种子')
+    # Other
+    parser.add_argument('--num_workers', type=int, default=4, help='Number of data loading workers')
+    parser.add_argument('--save_dir', type=str, default='experiments/unet_default', help='Save directory')
+    parser.add_argument('--save_interval', type=int, default=10, help='Checkpoint save interval')
+    parser.add_argument('--vis_interval', type=int, default=5, help='Visualization interval')
+    parser.add_argument('--seed', type=int, default=42, help='Random seed')
     
     return parser.parse_args()
 
 
 def set_seed(seed):
-    """设置随机种子"""
+    """Set random seed"""
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     np.random.seed(seed)
@@ -396,13 +396,13 @@ def set_seed(seed):
 
 
 def main():
-    # 解析参数
+    # Parse arguments
     config = parse_args()
     
-    # 设置随机种子
+    # Set random seed
     set_seed(config.seed)
     
-    # 创建训练器并训练
+    # Create trainer and train
     trainer = Trainer(config)
     trainer.train()
 

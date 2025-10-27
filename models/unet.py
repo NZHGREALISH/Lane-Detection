@@ -7,7 +7,7 @@ import torch.nn.functional as F
 
 
 class DoubleConv(nn.Module):
-    """双卷积层: Conv -> BN -> ReLU -> Conv -> BN -> ReLU"""
+    """Double convolution layer: Conv -> BN -> ReLU -> Conv -> BN -> ReLU"""
     
     def __init__(self, in_channels, out_channels, mid_channels=None):
         super().__init__()
@@ -27,7 +27,7 @@ class DoubleConv(nn.Module):
 
 
 class Down(nn.Module):
-    """下采样: MaxPool -> DoubleConv"""
+    """Downsampling: MaxPool -> DoubleConv"""
     
     def __init__(self, in_channels, out_channels):
         super().__init__()
@@ -41,12 +41,12 @@ class Down(nn.Module):
 
 
 class Up(nn.Module):
-    """上采样 + Skip Connection: UpConv -> Concat -> DoubleConv"""
+    """Upsampling + Skip Connection: UpConv -> Concat -> DoubleConv"""
     
     def __init__(self, in_channels, out_channels, bilinear=True):
         super().__init__()
         
-        # 使用双线性插值或转置卷积进行上采样
+        # Use bilinear interpolation or transposed convolution for upsampling
         if bilinear:
             self.up = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
             self.conv = DoubleConv(in_channels, out_channels, in_channels // 2)
@@ -57,7 +57,7 @@ class Up(nn.Module):
     def forward(self, x1, x2):
         x1 = self.up(x1)
         
-        # 处理尺寸不匹配 (如果输入尺寸不是2的幂次)
+        # Handle size mismatch (if input size is not power of 2)
         diffY = x2.size()[2] - x1.size()[2]
         diffX = x2.size()[3] - x1.size()[3]
         
@@ -71,12 +71,12 @@ class Up(nn.Module):
 
 class UNet(nn.Module):
     """
-    U-Net模型用于语义分割
+    U-Net model for semantic segmentation
     
     Args:
-        n_channels: 输入通道数 (RGB为3)
-        n_classes: 输出类别数 (二分类为1)
-        bilinear: 是否使用双线性插值上采样
+        n_channels: Number of input channels (3 for RGB)
+        n_classes: Number of output classes (1 for binary classification)
+        bilinear: Whether to use bilinear interpolation for upsampling
     """
     
     def __init__(self, n_channels=3, n_classes=1, bilinear=True):
@@ -122,14 +122,14 @@ class UNet(nn.Module):
 
 
 if __name__ == '__main__':
-    # 测试模型
+    # Test model
     model = UNet(n_channels=3, n_classes=1, bilinear=True)
     x = torch.randn(2, 3, 256, 256)
     output = model(x)
     print(f"Input shape: {x.shape}")
     print(f"Output shape: {output.shape}")
     
-    # 计算参数量
+    # Calculate parameters
     total_params = sum(p.numel() for p in model.parameters())
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"Total parameters: {total_params:,}")

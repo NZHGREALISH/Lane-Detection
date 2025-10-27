@@ -10,12 +10,12 @@ import os
 
 def denormalize(image, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]):
     """
-    反归一化图像用于可视化
+    Denormalize image for visualization
     
     Args:
-        image: 归一化后的图像 [C, H, W] 或 [B, C, H, W]
-        mean: 归一化均值
-        std: 归一化标准差
+        image: Normalized image [C, H, W] or [B, C, H, W]
+        mean: Normalization mean
+        std: Normalization standard deviation
     
     Returns:
         denormalized image
@@ -37,15 +37,15 @@ def denormalize(image, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]):
 
 def visualize_predictions(images, masks, preds, num_samples=4, threshold=0.5, save_path=None):
     """
-    可视化预测结果
+    Visualize prediction results
     
     Args:
-        images: 输入图像 [B, C, H, W]
-        masks: 真实mask [B, 1, H, W]
-        preds: 预测概率 [B, 1, H, W]
-        num_samples: 显示样本数
-        threshold: 二值化阈值
-        save_path: 保存路径
+        images: Input images [B, C, H, W]
+        masks: Ground truth masks [B, 1, H, W]
+        preds: Predicted probabilities [B, 1, H, W]
+        num_samples: Number of samples to display
+        threshold: Binary threshold
+        save_path: Path to save visualization
     """
     num_samples = min(num_samples, images.shape[0])
     
@@ -55,33 +55,33 @@ def visualize_predictions(images, masks, preds, num_samples=4, threshold=0.5, sa
         axes = axes.reshape(1, -1)
     
     for idx in range(num_samples):
-        # 准备图像
+        # Prepare images
         image = images[idx].cpu()
         mask = masks[idx].squeeze().cpu().numpy()
         pred = preds[idx].squeeze().cpu().numpy()
         pred_binary = (pred > threshold).astype(np.float32)
         
-        # 反归一化图像
+        # Denormalize image
         image = denormalize(image)
         image = image.permute(1, 2, 0).numpy()
         image = np.clip(image, 0, 1)
         
-        # 显示原图
+        # Show original image
         axes[idx, 0].imshow(image)
         axes[idx, 0].set_title('Original Image')
         axes[idx, 0].axis('off')
         
-        # 显示真实mask
+        # Show ground truth mask
         axes[idx, 1].imshow(mask, cmap='gray')
         axes[idx, 1].set_title('Ground Truth')
         axes[idx, 1].axis('off')
         
-        # 显示预测概率
+        # Show prediction probabilities
         axes[idx, 2].imshow(pred, cmap='jet', vmin=0, vmax=1)
         axes[idx, 2].set_title('Prediction (Prob)')
         axes[idx, 2].axis('off')
         
-        # 显示二值化预测
+        # Show binarized prediction
         axes[idx, 3].imshow(pred_binary, cmap='gray')
         axes[idx, 3].set_title(f'Prediction (Binary, th={threshold})')
         axes[idx, 3].axis('off')
@@ -100,16 +100,16 @@ def visualize_predictions(images, masks, preds, num_samples=4, threshold=0.5, sa
 
 def visualize_overlay(images, masks, preds, num_samples=4, threshold=0.5, alpha=0.5, save_path=None):
     """
-    将预测结果叠加到原图上可视化
+    Visualize predictions overlaid on original images
     
     Args:
-        images: 输入图像 [B, C, H, W]
-        masks: 真实mask [B, 1, H, W]
-        preds: 预测概率 [B, 1, H, W]
-        num_samples: 显示样本数
-        threshold: 二值化阈值
-        alpha: 叠加透明度
-        save_path: 保存路径
+        images: Input images [B, C, H, W]
+        masks: Ground truth masks [B, 1, H, W]
+        preds: Predicted probabilities [B, 1, H, W]
+        num_samples: Number of samples to display
+        threshold: Binary threshold
+        alpha: Overlay transparency
+        save_path: Path to save visualization
     """
     num_samples = min(num_samples, images.shape[0])
     
@@ -119,29 +119,29 @@ def visualize_overlay(images, masks, preds, num_samples=4, threshold=0.5, alpha=
         axes = axes.reshape(1, -1)
     
     for idx in range(num_samples):
-        # 准备图像
+        # Prepare images
         image = images[idx].cpu()
         mask = masks[idx].squeeze().cpu().numpy()
         pred = preds[idx].squeeze().cpu().numpy()
         pred_binary = (pred > threshold).astype(np.float32)
         
-        # 反归一化图像
+        # Denormalize image
         image = denormalize(image)
         image = image.permute(1, 2, 0).numpy()
         image = np.clip(image, 0, 1)
         
-        # 显示原图
+        # Show original image
         axes[idx, 0].imshow(image)
         axes[idx, 0].set_title('Original Image')
         axes[idx, 0].axis('off')
         
-        # 显示GT叠加
+        # Show GT overlay
         axes[idx, 1].imshow(image)
         axes[idx, 1].imshow(mask, cmap='Greens', alpha=alpha * mask)
         axes[idx, 1].set_title('Ground Truth Overlay')
         axes[idx, 1].axis('off')
         
-        # 显示预测叠加
+        # Show prediction overlay
         axes[idx, 2].imshow(image)
         axes[idx, 2].imshow(pred_binary, cmap='Reds', alpha=alpha * pred_binary)
         axes[idx, 2].set_title('Prediction Overlay')
@@ -161,15 +161,15 @@ def visualize_overlay(images, masks, preds, num_samples=4, threshold=0.5, alpha=
 
 def plot_training_curves(history, save_path=None):
     """
-    绘制训练曲线
+    Plot training curves
     
     Args:
-        history: 训练历史字典，包含loss和metrics
-        save_path: 保存路径
+        history: Training history dictionary containing loss and metrics
+        save_path: Path to save plot
     """
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
     
-    # Loss曲线
+    # Loss curve
     axes[0, 0].plot(history['train_loss'], label='Train Loss')
     axes[0, 0].plot(history['val_loss'], label='Val Loss')
     axes[0, 0].set_xlabel('Epoch')
@@ -178,7 +178,7 @@ def plot_training_curves(history, save_path=None):
     axes[0, 0].legend()
     axes[0, 0].grid(True)
     
-    # IoU曲线
+    # IoU curve
     if 'train_iou' in history:
         axes[0, 1].plot(history['train_iou'], label='Train IoU')
         axes[0, 1].plot(history['val_iou'], label='Val IoU')
@@ -188,7 +188,7 @@ def plot_training_curves(history, save_path=None):
         axes[0, 1].legend()
         axes[0, 1].grid(True)
     
-    # Dice系数曲线
+    # Dice coefficient curve
     if 'train_dice' in history:
         axes[1, 0].plot(history['train_dice'], label='Train Dice')
         axes[1, 0].plot(history['val_dice'], label='Val Dice')
@@ -198,7 +198,7 @@ def plot_training_curves(history, save_path=None):
         axes[1, 0].legend()
         axes[1, 0].grid(True)
     
-    # 像素准确率曲线
+    # Pixel accuracy curve
     if 'train_acc' in history:
         axes[1, 1].plot(history['train_acc'], label='Train Accuracy')
         axes[1, 1].plot(history['val_acc'], label='Val Accuracy')
@@ -221,7 +221,7 @@ def plot_training_curves(history, save_path=None):
 
 
 if __name__ == '__main__':
-    # 测试可视化
+    # Test visualization
     batch_size = 4
     images = torch.randn(batch_size, 3, 256, 256)
     masks = torch.randint(0, 2, (batch_size, 1, 256, 256)).float()
