@@ -5,6 +5,7 @@ A drivable area segmentation project based on the BDD100K dataset.
 ## Project Overview
 
 This project implements drivable area segmentation for autonomous driving scenarios, training deep learning models to identify drivable areas on roads using the BDD100K dataset.
+<img width="1743" height="9583" alt="test_predictions" src="https://github.com/user-attachments/assets/baeead3c-ebb2-4984-a0ca-c30a13dd2e29" />
 
 ## Project Structure
 
