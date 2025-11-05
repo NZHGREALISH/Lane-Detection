@@ -14,6 +14,7 @@ import json
 
 from data.dataset import BDD100KDrivableDataset, get_train_transforms, get_val_transforms
 from models.unet_pretrained import PretrainedUNet, PretrainedUNetPlusPlus, PretrainedDeepLabV3Plus
+from models.baseline_cnn import BaselineCNN
 from utils.losses_improved import WeightedBCEDiceLoss, TverskyLoss, FocalTverskyLoss, ComboLoss
 from utils.metrics import calculate_iou, calculate_dice_coefficient, calculate_pixel_accuracy
 from utils.visualization import plot_training_curves, visualize_predictions
@@ -24,21 +25,28 @@ class ImprovedTrainer(BaseTrainer):
     """Improved trainer with pretrained models and better techniques"""
     
     def _build_model(self):
-        """Build pretrained model"""
+        """Build model (pretrained or baseline)"""
         model_type = self.config.model_type
-        encoder_name = self.config.encoder_name
         
-        if model_type == 'unet':
-            model = PretrainedUNet(encoder_name=encoder_name, encoder_weights='imagenet')
-            print(f"Using Pretrained U-Net with {encoder_name} encoder")
-        elif model_type == 'unetplusplus':
-            model = PretrainedUNetPlusPlus(encoder_name=encoder_name, encoder_weights='imagenet')
-            print(f"Using Pretrained U-Net++ with {encoder_name} encoder")
-        elif model_type == 'deeplabv3plus':
-            model = PretrainedDeepLabV3Plus(encoder_name=encoder_name, encoder_weights='imagenet')
-            print(f"Using Pretrained DeepLabV3+ with {encoder_name} encoder")
+        # Baseline CNN for comparison
+        if model_type == 'baseline_cnn':
+            model = BaselineCNN(n_channels=3, n_classes=1)
+            print(f"Using Baseline CNN (from scratch, no pretrained weights)")
+        # Pretrained models
         else:
-            raise ValueError(f"Unknown model type: {model_type}")
+            encoder_name = self.config.encoder_name
+            
+            if model_type == 'unet':
+                model = PretrainedUNet(encoder_name=encoder_name, encoder_weights='imagenet')
+                print(f"Using Pretrained U-Net with {encoder_name} encoder")
+            elif model_type == 'unetplusplus':
+                model = PretrainedUNetPlusPlus(encoder_name=encoder_name, encoder_weights='imagenet')
+                print(f"Using Pretrained U-Net++ with {encoder_name} encoder")
+            elif model_type == 'deeplabv3plus':
+                model = PretrainedDeepLabV3Plus(encoder_name=encoder_name, encoder_weights='imagenet')
+                print(f"Using Pretrained DeepLabV3+ with {encoder_name} encoder")
+            else:
+                raise ValueError(f"Unknown model type: {model_type}")
         
         # Print model parameters
         total_params = sum(p.numel() for p in model.parameters())
@@ -71,7 +79,15 @@ class ImprovedTrainer(BaseTrainer):
     
     def _build_optimizer(self):
         """Build optimizer with different learning rates for encoder and decoder"""
-        if self.config.use_differential_lr:
+        # For baseline CNN, don't use differential LR (no pretrained encoder)
+        if self.config.model_type == 'baseline_cnn':
+            optimizer = AdamW(
+                self.model.parameters(), 
+                lr=self.config.lr, 
+                weight_decay=self.config.weight_decay
+            )
+            print(f"Using AdamW optimizer with lr={self.config.lr}")
+        elif self.config.use_differential_lr:
             # Lower learning rate for pretrained encoder
             encoder_params = []
             decoder_params = []
@@ -133,11 +149,11 @@ def parse_args():
     
     # Model related
     parser.add_argument('--model_type', type=str, default='unet', 
-                       choices=['unet', 'unetplusplus', 'deeplabv3plus'],
-                       help='Model architecture')
+                       choices=['baseline_cnn', 'unet', 'unetplusplus', 'deeplabv3plus'],
+                       help='Model architecture (baseline_cnn for simple CNN baseline)')
     parser.add_argument('--encoder_name', type=str, default='resnet34',
                        choices=['resnet34', 'resnet50', 'efficientnet-b0', 'efficientnet-b3'],
-                       help='Encoder backbone')
+                       help='Encoder backbone (only for pretrained models, ignored for baseline_cnn)')
     
     # Training related
     parser.add_argument('--batch_size', type=int, default=8, help='Batch size')
